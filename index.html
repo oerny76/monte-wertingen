@@ -385,6 +385,9 @@
   <button class="btn-exp btn-mail" onclick="doMail()">✉️ Per E-Mail senden</button>
 
   <div style="margin-top:18px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--ink-faint);margin-bottom:8px;">Datensicherung</div>
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:11px 12px; margin-bottom:10px; font-size:0.76rem; color:var(--ink-soft); line-height:1.5;">
+    ⚠️ Alle Einträge liegen nur auf diesem Gerät. Bei einer Browser-Neuinstallation oder nach längerer Nichtnutzung kann iOS den lokalen Speicher automatisch leeren. Ein regelmäßiges Backup schützt davor.
+  </div>
   <button class="btn-exp" style="background:var(--card);color:var(--ink);border:1.5px solid var(--border);" onclick="doBackup()">💾 Backup speichern (JSON)</button>
   <button class="btn-exp" style="background:var(--card);color:var(--ink);border:1.5px solid var(--border);" onclick="doImport()">📂 Backup importieren</button>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(this)">
@@ -439,8 +442,9 @@
       </div>
 
       <div class="info-box">
-        <h4>⚠️ Datenverlust vermeiden</h4>
-        <p>Wenn Safari neu installiert oder der Browser-Cache vollständig geleert wird, können localStorage-Daten verloren gehen. Empfehlung: nach jeder Erfassungssitzung ein Backup speichern.</p>
+        <h4>⚠️ Warum Backups wichtig sind</h4>
+        <p>iOS löscht aus Datenschutzgründen automatisch lokal gespeicherte App-Daten, wenn eine Web-App rund 7 Tage lang nicht geöffnet wurde ("Intelligent Tracking Prevention"). Auch eine Neuinstallation des Browsers oder ein vollständiges Leeren des Caches kann alle Einträge löschen.</p>
+        <p>Die App erinnert nach jeder Änderung mit einem kleinen Banner am unteren Bildschirmrand an ein Backup. Ein Backup dauert nur Sekunden und schützt zuverlässig vor Datenverlust.</p>
       </div>
 
       <hr class="set-divider">
@@ -455,7 +459,7 @@
 
       <div class="version-line">
         Familienarbeitsstunden Montessori-Campus Wertingen<br>
-        Version 1.3.0 · Entwickelt von Ernest Jennen
+        Version 1.4.0 · Entwickelt von Ernest Jennen
       </div>
 
     </div>
@@ -494,8 +498,9 @@
       </div>
 
       <div class="info-box">
-        <h4>💾 Backup-Empfehlung</h4>
-        <p>Nach jeder Erfassungssitzung ein JSON-Backup speichern. Die Datei landet im Download-Ordner bzw. in der Dateien-App. Bei Datenverlust (z.B. nach Browser-Neuinstallation) einfach „Backup importieren" antippen und die letzte Backup-Datei auswählen — alle Einträge sind sofort wieder da.</p>
+        <h4>💾 Warum Backup wichtig ist</h4>
+        <p>Die Daten liegen nur auf diesem Gerät. iOS kann lokale App-Daten automatisch löschen, wenn die App länger nicht geöffnet wird — ebenso bei Cache-Leeren oder Browser-Neuinstallation. Ein JSON-Backup ist die einzige Möglichkeit, alle Einträge danach vollständig wiederherzustellen.</p>
+        <p>Nach jeder Erfassungssitzung ein Backup speichern: Die Datei landet im Download-Ordner bzw. in der Dateien-App. Bei Datenverlust einfach „Backup importieren" antippen und die letzte Backup-Datei auswählen — alle Einträge sind sofort wieder da.</p>
       </div>
 
       <div class="info-box">
@@ -514,7 +519,7 @@
       <div class="info-box">
         <h4>🌱 Familienarbeitsstunden Montessori-Campus Wertingen</h4>
         <p>Entwickelt von Ernest Jennen in Eigeninitiative als Elternteil am Montessori-Campus Wertingen. Die App läuft vollständig lokal auf dem Gerät — ohne Server, ohne Cloud, ohne Registrierung.</p>
-        <p>Version 1.3.0</p>
+        <p>Version 1.4.0</p>
       </div>
 
     </div>
@@ -544,6 +549,24 @@
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     BACKUP-HINWEIS-BANNER (dezent, schließbar)
+══════════════════════════════════════════ -->
+<div id="backupBanner" style="display:none; position:fixed; left:14px; right:14px; bottom:84px; z-index:300;
+  background:var(--ink); color:#fff; border-radius:var(--radius-sm); padding:11px 12px 11px 14px;
+  display:flex; align-items:center; gap:10px; box-shadow:0 8px 24px rgba(0,0,0,0.25); animation:up 0.2s ease-out;">
+  <span style="font-size:1.1rem; flex-shrink:0;">💾</span>
+  <span style="font-size:0.8rem; line-height:1.35; flex:1;">
+    Änderungen gespeichert. Backup erstellen, damit nichts verloren geht?
+  </span>
+  <button onclick="bannerBackup()" style="flex-shrink:0; background:var(--yellow); color:var(--ink); border:none;
+    border-radius:7px; padding:7px 11px; font-family:'DM Sans',sans-serif; font-size:0.78rem; font-weight:700; cursor:pointer;">
+    Sichern
+  </button>
+  <button onclick="dismissBanner()" style="flex-shrink:0; background:none; border:none; color:rgba(255,255,255,0.6);
+    font-size:1rem; cursor:pointer; padding:2px 4px;">✕</button>
+</div>
 
 <!-- BOTTOM NAV -->
 <div class="nav">
@@ -904,8 +927,31 @@ function clearAll() {
 // ═══════════════════════════════════════════
 // HILFSFUNKTIONEN
 // ═══════════════════════════════════════════
-function persist()  { lsSet('faw_entries', JSON.stringify(entries)); updExport(); }
+function persist()  {
+  lsSet('faw_entries', JSON.stringify(entries));
+  updExport();
+  showBackupBanner();
+}
 function updHeader(){ document.getElementById('totalBadge').textContent = fmtH(entries.reduce((s,e)=>s+e.dauer,0)); }
+
+// ── Backup-Hinweis-Banner ──
+let _bannerTimeout = null;
+function showBackupBanner() {
+  if (!entries.length) return; // nichts zu sichern (z.B. nach "Alle löschen")
+  const banner = document.getElementById('backupBanner');
+  clearTimeout(_bannerTimeout);
+  banner.style.display = 'flex';
+  // Automatisch ausblenden nach 8s, falls nicht aktiv weggeklickt
+  _bannerTimeout = setTimeout(dismissBanner, 8000);
+}
+function dismissBanner() {
+  clearTimeout(_bannerTimeout);
+  document.getElementById('backupBanner').style.display = 'none';
+}
+function bannerBackup() {
+  dismissBanner();
+  doBackup();
+}
 
 function fmtH(h) {
   if (!h) return '0 h';
@@ -934,7 +980,7 @@ function closeHelpOnOverlay(e) { if (e.target === document.getElementById('helpO
 function doBackup() {
   if (!entries.length) { toast('⚠️ Keine Einträge vorhanden'); return; }
   const payload = {
-    version: '1.3.0',
+    version: '1.4.0',
     exportedAt: new Date().toISOString(),
     name: ls('faw_name') || '',
     year: ls('faw_year') || autoYear(),
@@ -1019,6 +1065,19 @@ function confirmResolve(ok) {
   document.getElementById('confirmOverlay').classList.remove('on');
   if (ok && _confirmCb) _confirmCb();
   _confirmCb = null;
+}
+// ═══════════════════════════════════════════
+// SERVICE WORKER — macht die App offline-fähig
+// Betrifft nur die App-Hülle (HTML/CSS/Fonts), NICHT die Daten.
+// Die Daten liegen separat in localStorage — siehe Hilfe-Sheet.
+// ═══════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // Registrierung fehlgeschlagen (z.B. lokal ohne https) — App funktioniert trotzdem,
+      // nur ohne Offline-Unterstützung.
+    });
+  });
 }
 </script>
 </body>

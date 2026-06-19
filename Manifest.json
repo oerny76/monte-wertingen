@@ -1,0 +1,24 @@
+{
+  "name": "Familienarbeitsstunden Montessori-Campus Wertingen",
+  "short_name": "FAM Wertingen",
+  "description": "Erfassung von Familienarbeitsstunden – lokal, privat, offline.",
+  "start_url": "./arbeitsstunden.html",
+  "display": "standalone",
+  "background_color": "#E8B800",
+  "theme_color": "#E8B800",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
