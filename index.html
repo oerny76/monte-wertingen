@@ -122,27 +122,19 @@
     }
     .cat-btn.sel { background: var(--yellow-light); border-color: var(--yellow-mid); color: var(--ink); font-weight: 700; }
 
-    /* ── BUTTONS ── */
-    .btn-primary {
-      width: 100%; background: var(--yellow); border: none; border-radius: var(--radius-sm);
-      padding: 14px; font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700;
-      color: var(--ink); cursor: pointer; transition: opacity 0.15s;
-    }
-    .btn-primary:active { opacity: 0.8; }
-    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
-    .btn-secondary {
-      width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-      padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600;
-      color: var(--ink-soft); cursor: pointer; transition: opacity 0.15s;
-    }
-    .btn-secondary:active { opacity: 0.75; }
-    .btn-delete {
-      width: 100%; background: var(--red-light); border: 1.5px solid var(--red-border); border-radius: var(--radius-sm);
-      padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 700;
-      color: var(--red); cursor: pointer; margin-top: 8px; transition: opacity 0.15s;
-    }
-    .btn-delete:active { opacity: 0.75; }
+    /* ── BUTTONS (Refactored) ── */
+    .btn { width: 100%; border: none; border-radius: var(--radius-sm); padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; display: flex; justify-content: center; align-items: center; gap: 7px; text-decoration: none; box-sizing: border-box; }
+    .btn:active { opacity: 0.8; }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-primary { background: var(--yellow); color: var(--ink); font-size: 1rem; padding: 14px; }
+    .btn-secondary { background: var(--surface); border: 1.5px solid var(--border); color: var(--ink-soft); font-weight: 600; }
+    .btn-delete { background: var(--red-light); border: 1.5px solid var(--red-border); color: var(--red); margin-top: 8px; }
     .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .btn-dl { background: var(--ink); color: var(--yellow); margin-bottom: 9px; }
+    .btn-mail { background: var(--card); color: var(--ink); border: 1.5px solid var(--border); margin-bottom: 9px;}
+    .btn-outline { background: var(--card); color: var(--ink); border: 1.5px solid var(--border); margin-bottom: 9px; }
 
     /* ── LIST ── */
     .list-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; }
@@ -206,11 +198,17 @@
     .btn-mail { background: var(--card); color: var(--ink); border: 1.5px solid var(--border); }
     .btn-danger-exp { background: var(--red-light); color: var(--red); border: 1.5px solid var(--red-border); }
 
-    /* ── SETTINGS SHEET ── */
-    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.44); z-index: 500; align-items: flex-end; }
-    .overlay.on { display: flex; }
-    .sheet { background: var(--card); border-radius: 20px 20px 0 0; width: 100%; max-height: 90vh; overflow-y: auto; padding-bottom: 40px; animation: up 0.25s ease-out; }
-    @keyframes up { from { transform: translateY(60px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+    /* ── DIALOGS & OVERLAYS ── */
+    dialog { border: none; padding: 0; background: transparent; overflow: visible; margin: auto; max-width: 90vw; }
+    dialog::backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+
+    .dialog-card { background: var(--card); border-radius: var(--radius); padding: 24px 20px; width: 100%; min-width: 300px; max-width: 340px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: up 0.2s ease-out; }
+    @keyframes up { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+
+    /* ── SETTINGS SHEET (via Dialog) ── */
+    .sheet-dialog { align-items: flex-end; margin: 0; margin-top: auto; max-width: 100vw; width: 100vw; }
+    .sheet { background: var(--card); border-radius: 20px 20px 0 0; width: 100%; max-height: 90vh; overflow-y: auto; padding-bottom: 40px; animation: slideUp 0.25s ease-out; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     .sheet-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 12px auto 14px; }
     .sheet-hdr { display: flex; justify-content: space-between; align-items: center; padding: 0 18px 14px; border-bottom: 1px solid var(--border); }
     .sheet-hdr h2 { font-size: 1rem; font-weight: 700; }
@@ -254,29 +252,26 @@
 </head>
 <body>
 
-<!-- ── HEADER ── -->
-<div class="app-header">
+<header class="app-header">
   <div class="app-header-top">
     <div>
-      <div class="app-title">🌱 Familienarbeitsstunden</div>
+      <h1 class="app-title">🌱 Familienarbeitsstunden</h1>
       <div class="app-subtitle">Montessori-Campus Wertingen</div>
     </div>
     <div class="header-right">
-      <div class="total-badge" id="totalBadge">0 h</div>
-      <button class="settings-icon-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
+      <div class="total-badge" id="totalBadge" aria-live="polite" aria-label="Gesamt erfasste Stunden">0 h</div>
+      <button class="settings-icon-btn" onclick="openSettings()" aria-label="Einstellungen öffnen" title="Einstellungen">⚙️</button>
     </div>
   </div>
-  <div class="tabs">
-    <button class="tab-btn active" onclick="sw('erfassen')">Erfassen</button>
-    <button class="tab-btn" onclick="sw('verlauf')">Verlauf</button>
-    <button class="tab-btn" onclick="sw('export')">Backup & Export</button>
+  <div class="tabs" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true" onclick="sw('erfassen')">Erfassen</button>
+    <button class="tab-btn" role="tab" aria-selected="false" onclick="sw('verlauf')">Verlauf</button>
+    <button class="tab-btn" role="tab" aria-selected="false" onclick="sw('export')">Backup & Export</button>
   </div>
-</div>
+</header>
 
-<!-- ══════════════════════════════════════════
-     TAB 1: ERFASSEN
-══════════════════════════════════════════ -->
-<div id="tab-erfassen" class="view active">
+<main class="content">
+  <section id="tab-erfassen" class="view active" role="tabpanel">
   <div class="form-card">
 
     <!-- Edit-Modus-Banner (versteckt wenn neuer Eintrag) -->
@@ -295,7 +290,7 @@
       <div class="install-hint-text" style="color:var(--ink-soft);">
         In den ⚙️ <b>Einstellungen</b> ist noch kein Name eingetragen — er erscheint später im CSV-Export. Falls du schon einmal ein Backup gemacht hattest (z. B. vor längerer Pause oder auf einem neuen Gerät), kannst du Name, Schuljahr und alle Einträge daraus wiederherstellen.
       </div>
-      <button class="btn-secondary" style="margin-top:10px; padding:9px;" onclick="doImport()">📂 Backup einspielen</button>
+      <button class="btn btn-secondary" style="margin-top:10px; padding:9px;" onclick="doImport()">📂 Backup einspielen</button>
     </div>
 
     <!-- DATUM -->
@@ -349,30 +344,27 @@
 
     <!-- Buttons: Neuer Eintrag -->
     <div id="btnsNew">
-      <button class="btn-primary" id="btnSave" onclick="doSave()" disabled>Eintrag speichern</button>
+      <button class="btn btn-primary" id="btnSave" onclick="doSave()" disabled>Eintrag speichern</button>
     </div>
 
     <!-- Buttons: Bearbeiten-Modus -->
     <div id="btnsEdit" style="display:none">
       <div class="btn-row">
-        <button class="btn-secondary" onclick="cancelEdit()">Abbrechen</button>
-        <button class="btn-primary" id="btnUpdate" onclick="doUpdate()">Änderungen speichern</button>
+        <button class="btn btn-secondary" onclick="cancelEdit()">Abbrechen</button>
+        <button class="btn btn-primary" id="btnUpdate" onclick="doUpdate()">Änderungen speichern</button>
       </div>
-      <button class="btn-delete" onclick="deleteFromEdit()">🗑️ Eintrag löschen</button>
+      <button class="btn btn-delete" onclick="deleteFromEdit()">🗑️ Eintrag löschen</button>
     </div>
 
   </div>
 
-</div>
+  </section>
 
-<!-- ══════════════════════════════════════════
-     TAB 2: VERLAUF
-══════════════════════════════════════════ -->
-<div id="tab-verlauf" class="view">
+  <section id="tab-verlauf" class="view" role="tabpanel">
 
   <div class="list-toolbar">
     <span class="list-toolbar-title">Alle Einträge</span>
-    <select class="filter-sel" id="filterCat" onchange="renderList()">
+    <select class="filter-sel" aria-label="Nach Kategorie filtern" id="filterCat" onchange="renderList()">
       <option value="">Alle Kategorien</option>
       <option>Garten</option><option>Elternbeirat</option><option>Veranstaltung</option>
       <option>Verwaltung</option><option>Küche</option><option>Transport</option>
@@ -387,12 +379,10 @@
   </div>
 
   <div id="entryList"></div>
-</div>
 
-<!-- ══════════════════════════════════════════
-     TAB 3: EXPORT
-══════════════════════════════════════════ -->
-<div id="tab-export" class="view">
+  </section>
+
+  <section id="tab-export" class="view" role="tabpanel">
 
   <div class="export-card">
     <div class="export-row">
@@ -410,31 +400,31 @@
     </div>
   </div>
 
-  <button class="btn-exp btn-dl" onclick="doDownload()">⬇️ Als CSV herunterladen</button>
-  <button class="btn-exp btn-mail" onclick="doMail()">✉️ Per E-Mail senden</button>
+  <button class="btn btn-dl" onclick="doDownload()">⬇️ Als CSV herunterladen</button>
+  <button class="btn btn-mail" onclick="doMail()">✉️ Per E-Mail senden</button>
 
   <div style="margin-top:18px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--ink-faint);margin-bottom:8px;">Datensicherung</div>
   <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:11px 12px; margin-bottom:10px; font-size:0.76rem; color:var(--ink-soft); line-height:1.5;">
     ⚠️ Alle Einträge liegen nur auf diesem Gerät. Bei einer Browser-Neuinstallation oder nach längerer Nichtnutzung kann iOS den lokalen Speicher automatisch leeren. Ein regelmäßiges Backup schützt davor — die Datei landet im Downloads-Ordner bzw. in „Dateien" (iOS) oder an einem selbst gewählten Ort (Android).
   </div>
-  <button class="btn-exp" style="background:var(--card);color:var(--ink);border:1.5px solid var(--border);" onclick="doBackup()">💾 Backup speichern (JSON)</button>
-  <button class="btn-exp" style="background:var(--card);color:var(--ink);border:1.5px solid var(--border);" onclick="doImport()">📂 Backup importieren</button>
+  <button class="btn btn-outline" onclick="doBackup()">💾 Backup speichern (JSON)</button>
+  <button class="btn btn-outline" onclick="doImport()">📂 Backup importieren</button>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(this)">
 
   <div style="margin-top:18px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--ink-faint);margin-bottom:8px;">Gefährliche Zone</div>
-  <button class="btn-exp btn-danger-exp" onclick="clearAll()">🗑️ Alle Einträge löschen</button>
-
-</div>
+  <button class="btn btn-delete" onclick="clearAll()">🗑️ Alle Einträge löschen</button>
+  </section>
+</main>
 
 <!-- ══════════════════════════════════════════
-     EINSTELLUNGEN (Bottom Sheet)
+     EINSTELLUNGEN (Dialog mit Bottom Sheet)
 ══════════════════════════════════════════ -->
-<div class="overlay" id="overlay" onclick="overlayClick(event)">
+<dialog id="settingsDialog" class="sheet-dialog">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-hdr">
       <h2>⚙️ Einstellungen</h2>
-      <button class="sheet-close" onclick="closeSettings()">✕</button>
+      <button class="sheet-close" aria-label="Schließen" onclick="closeSettings()">✕</button>
     </div>
     <div class="sheet-body">
 
@@ -513,17 +503,17 @@
 
     </div>
   </div>
-</div>
+</dialog>
 
 <!-- ══════════════════════════════════════════
-     HILFE-SHEET (❓-Icon)
+     HILFE-DIALOG (Bottom Sheet)
 ══════════════════════════════════════════ -->
-<div class="overlay" id="helpOverlay" onclick="closeHelpOnOverlay(event)">
+<dialog id="helpDialog" class="sheet-dialog">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-hdr">
       <h2>❓ Hilfe & Anleitung</h2>
-      <button class="sheet-close" onclick="closeHelp()">✕</button>
+      <button class="sheet-close" aria-label="Schließen" onclick="closeHelp()">✕</button>
     </div>
     <div class="sheet-body">
 
@@ -573,28 +563,22 @@
 
     </div>
   </div>
-</div>
+</dialog>
 
 <!-- ══════════════════════════════════════════
-     BESTÄTIGUNGS-DIALOG (ersetzt confirm())
+     BESTÄTIGUNGS-DIALOG
 ══════════════════════════════════════════ -->
-<div class="overlay" id="confirmOverlay" style="z-index:600; align-items:center; justify-content:center; padding:20px;">
-  <div style="background:var(--card); border-radius:var(--radius); padding:24px 20px; width:100%; max-width:340px; box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:up 0.2s ease-out;">
+<dialog id="confirmDialogEl">
+  <div class="dialog-card" style="animation:up 0.2s ease-out;">
     <div style="font-size:1.5rem; text-align:center; margin-bottom:10px;" id="confirmIcon">🗑️</div>
     <div style="font-size:0.95rem; font-weight:700; text-align:center; margin-bottom:8px;" id="confirmTitle">Löschen?</div>
     <div style="font-size:0.82rem; color:var(--ink-soft); text-align:center; line-height:1.5; margin-bottom:20px;" id="confirmMsg"></div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-      <button onclick="confirmResolve(false)"
-        style="padding:13px; border-radius:var(--radius-sm); border:1.5px solid var(--border); background:var(--surface); font-family:'DM Sans',sans-serif; font-size:0.95rem; font-weight:600; color:var(--ink-soft); cursor:pointer;">
-        Abbrechen
-      </button>
-      <button id="confirmOkBtn" onclick="confirmResolve(true)"
-        style="padding:13px; border-radius:var(--radius-sm); border:none; font-family:'DM Sans',sans-serif; font-size:0.95rem; font-weight:700; cursor:pointer;">
-        Löschen
-      </button>
+      <button class="btn btn-secondary" onclick="confirmResolve(false)">Abbrechen</button>
+      <button id="confirmOkBtn" class="btn" onclick="confirmResolve(true)">Löschen</button>
     </div>
   </div>
-</div>
+</dialog>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -617,8 +601,7 @@
     font-size:1rem; cursor:pointer; padding:2px 4px;">✕</button>
 </div>
 
-<!-- HILFE — schwebender Button rechts unten, oberhalb der Bottom-Nav -->
-<button id="helpFab" onclick="openHelp()" title="Hilfe & Info"
+<button id="helpFab" onclick="openHelp()" aria-label="Hilfe und Info" title="Hilfe & Info"
   style="position:fixed; right:16px; bottom:96px; z-index:350;
   width:48px; height:48px; border-radius:50%; border:none;
   background:var(--ink); color:var(--yellow); font-size:1.3rem;
@@ -627,18 +610,17 @@
   ❓
 </button>
 
-<!-- BOTTOM NAV -->
-<div class="nav">
-  <button class="nb on" id="nav-erfassen" onclick="sw('erfassen')">
+<nav class="nav">
+  <button class="nb on" id="nav-erfassen" aria-label="Tab: Erfassen" onclick="sw('erfassen')">
     <span class="ni">➕</span><span class="nl">Erfassen</span>
   </button>
-  <button class="nb" id="nav-verlauf" onclick="sw('verlauf')">
+  <button class="nb" id="nav-verlauf" aria-label="Tab: Verlauf" onclick="sw('verlauf')">
     <span class="ni">📋</span><span class="nl">Verlauf</span>
   </button>
-  <button class="nb" id="nav-export" onclick="sw('export')">
+  <button class="nb" id="nav-export" aria-label="Tab: Backup und Export" onclick="sw('export')">
     <span class="ni">📤</span><span class="nl">Backup</span>
   </button>
-</div>
+</nav>
 
 <script>
 // ═══════════════════════════════════════════
@@ -647,21 +629,83 @@
 const TABS   = ['erfassen','verlauf','export'];
 const PRESET = [0.5, 1, 1.5, 2, 3, 4];
 
-let entries    = JSON.parse(localStorage.getItem('faw_entries') || '[]');
+let entries    = [];       // wird asynchron aus IndexedDB geladen
 let selDur     = null;   // aktuell gewählte Dauer
 let selCat     = null;   // aktuell gewählte Kategorie
 let editId     = null;   // null = neuer Eintrag, sonst ID
 let selIds     = new Set(); // für Batch-Löschung
 
 // ═══════════════════════════════════════════
+// XSS-SCHUTZ
+// ═══════════════════════════════════════════
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>'"]/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  }[m]));
+}
+
+// ═══════════════════════════════════════════
+// INDEXEDDB — Primärspeicher (robuster als localStorage gegen iOS ITP)
+// ═══════════════════════════════════════════
+const IDB_NAME  = 'faw_db';
+const IDB_STORE = 'entries';
+
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE))
+        db.createObjectStore(IDB_STORE, { keyPath: 'id' });
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+async function loadEntriesIDB() {
+  const db = await openIDB();
+  return new Promise(resolve => {
+    const req = db.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).getAll();
+    req.onsuccess = () => resolve((req.result || []).sort((a, b) => b.id - a.id));
+    req.onerror   = () => resolve([]);
+  });
+}
+
+async function saveEntriesIDB(arr) {
+  const db = await openIDB();
+  return new Promise(resolve => {
+    const tx    = db.transaction(IDB_STORE, 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    store.clear();
+    arr.forEach(e => store.put(e));
+    tx.oncomplete = () => resolve();
+  });
+}
+
+// ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
 let appReady = false; // verhindert Backup-Banner direkt beim Laden der Seite
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('inDatum').value = today();
   document.getElementById('setName').value = ls('faw_name') || '';
   document.getElementById('setYear').value = ls('faw_year') || autoYear();
+
+  // Migration: alte localStorage-Daten einmalig nach IndexedDB übertragen
+  const oldData = localStorage.getItem('faw_entries');
+  if (oldData) {
+    try {
+      entries = JSON.parse(oldData);
+      await saveEntriesIDB(entries);
+      localStorage.removeItem('faw_entries');
+    } catch (e) { /* Fehler beim Migrieren — IDB bleibt leer, kein Datenverlust */ }
+  } else {
+    entries = await loadEntriesIDB();
+  }
+
   updHeader();
   renderList();
   updExport();
@@ -760,11 +804,15 @@ function autoYear() {
 // ═══════════════════════════════════════════
 function sw(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
   document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  
   document.getElementById('tab-'  + name).classList.add('active');
-  document.querySelectorAll('.tab-btn')[TABS.indexOf(name)].classList.add('active');
+  const btnActive = document.querySelectorAll('.tab-btn')[TABS.indexOf(name)];
+  btnActive.classList.add('active');
+  btnActive.setAttribute('aria-selected', 'true');
   document.getElementById('nav-'  + name).classList.add('on');
+  
   if (name === 'verlauf') renderList();
   if (name === 'export')  updExport();
 }
@@ -772,10 +820,12 @@ function sw(name) {
 // ═══════════════════════════════════════════
 // SETTINGS SHEET
 // ═══════════════════════════════════════════
-function openSettings()  { document.getElementById('overlay').classList.add('on'); refreshFolderDisplay(); }
-function closeSettings() { document.getElementById('overlay').classList.remove('on'); updExport(); }
-function overlayClick(e) { if (e.target === document.getElementById('overlay')) closeSettings(); }
-function saveSetting(k)  {
+function openSettings()  { document.getElementById('settingsDialog').showModal(); refreshFolderDisplay(); }
+function closeSettings() { document.getElementById('settingsDialog').close(); updExport(); }
+document.getElementById('settingsDialog').addEventListener('click', e => {
+  if(e.target === document.getElementById('settingsDialog')) closeSettings();
+});
+async function saveSetting(k) {
   if (k === 'name') {
     const oldName = ls('faw_name') || '';
     const newName = document.getElementById('setName').value;
@@ -785,7 +835,7 @@ function saveSetting(k)  {
     // vorher leer waren oder einen anderen/alten Namen trugen.
     if (newName !== oldName && entries.length) {
       entries.forEach(e => { e.name = newName; });
-      lsSet('faw_entries', JSON.stringify(entries));
+      await persist();
       renderList();
     }
   }
@@ -840,7 +890,7 @@ function validate() {
 // ═══════════════════════════════════════════
 // EINTRAG SPEICHERN (neu)
 // ═══════════════════════════════════════════
-function doSave() {
+async function doSave() {
   if (!validate()) return;
   entries.unshift({
     id:       Date.now(),
@@ -850,7 +900,7 @@ function doSave() {
     notiz:    document.getElementById('inNote').value.trim(),
     name:     ls('faw_name') || ''
   });
-  persist();
+  await persist();
   resetForm();
   updHeader();
   toast('✅ Eintrag gespeichert');
@@ -896,7 +946,7 @@ function openEdit(id) {
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
-function doUpdate() {
+async function doUpdate() {
   if (!validate()) return;
   const idx = entries.findIndex(x => x.id === editId);
   if (idx < 0) return;
@@ -908,16 +958,16 @@ function doUpdate() {
     notiz:     document.getElementById('inNote').value.trim(),
     name:      entries[idx].name ?? (ls('faw_name') || '')
   };
-  persist();
+  await persist();
   resetForm();
   updHeader();
   toast('✅ Eintrag aktualisiert');
 }
 
 function deleteFromEdit() {
-  confirmDialog('Eintrag löschen?', 'Diese Aktion kann nicht rückgängig gemacht werden.', () => {
+  confirmDialog('Eintrag löschen?', 'Diese Aktion kann nicht rückgängig gemacht werden.', async () => {
     entries = entries.filter(x => x.id !== editId);
-    persist();
+    await persist();
     resetForm();
     updHeader();
     toast('🗑️ Eintrag gelöscht');
@@ -960,19 +1010,19 @@ function renderList() {
   }
 
   el.innerHTML = list.map(e => `
-    <div class="entry-card" id="ec-${e.id}">
-      <input type="checkbox" class="entry-cb" onchange="toggleSel(${e.id}, this.checked)">
+    <article class="entry-card" id="ec-${e.id}">
+      <input type="checkbox" class="entry-cb" aria-label="Eintrag auswählen" onchange="toggleSel(${e.id}, this.checked)">
       <div class="entry-dot"></div>
       <div class="entry-body" onclick="openEdit(${e.id})">
         <div class="entry-row1">
-          <span class="entry-cat">${e.kategorie || 'Ohne Kategorie'}</span>
+          <span class="entry-cat">${escapeHTML(e.kategorie) || 'Ohne Kategorie'}</span>
           <span class="entry-h">${fmtH(e.dauer)}</span>
         </div>
-        <div class="entry-note">${e.notiz}</div>
+        <div class="entry-note">${escapeHTML(e.notiz)}</div>
         <div class="entry-date">${fmtDate(e.datum)}</div>
       </div>
       <span class="entry-chevron">›</span>
-    </div>`).join('');
+    </article>`).join('');
 }
 
 // ═══════════════════════════════════════════
@@ -1000,10 +1050,10 @@ function batchDelete() {
   const n = selIds.size;
   if (!n) return;
   const label = n === 1 ? '1 Eintrag' : n + ' Einträge';
-  confirmDialog(label + ' löschen?', 'Diese Aktion kann nicht rückgängig gemacht werden.', () => {
+  confirmDialog(label + ' löschen?', 'Diese Aktion kann nicht rückgängig gemacht werden.', async () => {
     entries = entries.filter(e => !selIds.has(e.id));
     selIds.clear();
-    persist();
+    await persist();
     updHeader();
     renderList();
     toast(`🗑️ ${label} gelöscht`);
@@ -1018,7 +1068,7 @@ function updExport() {
   document.getElementById('expTotal').textContent = fmtH(total);
   document.getElementById('expCount').textContent = entries.length + ' Einträge';
   document.getElementById('expYear').textContent  = 'SJ ' + (ls('faw_year') || autoYear());
-  document.getElementById('expName').textContent  = ls('faw_name') || '–';
+  document.getElementById('expName').textContent  = escapeHTML(ls('faw_name')) || '–';
 }
 
 function buildCSV() {
@@ -1058,8 +1108,8 @@ function doMail() {
 }
 
 function clearAll() {
-  confirmDialog('Alle Einträge löschen?', 'Wirklich ALLE Einträge unwiderruflich löschen?', () => {
-    entries = []; persist(); updHeader(); renderList(); updExport();
+  confirmDialog('Alle Einträge löschen?', 'Wirklich ALLE Einträge unwiderruflich löschen?', async () => {
+    entries = []; await persist(); updHeader(); renderList(); updExport();
     toast('🗑️ Alle Einträge gelöscht');
   });
 }
@@ -1067,8 +1117,8 @@ function clearAll() {
 // ═══════════════════════════════════════════
 // HILFSFUNKTIONEN
 // ═══════════════════════════════════════════
-function persist()  {
-  lsSet('faw_entries', JSON.stringify(entries));
+async function persist() {
+  await saveEntriesIDB(entries);
   updExport();
   showBackupBanner();
 }
@@ -1111,9 +1161,11 @@ function toast(msg) {
 // ═══════════════════════════════════════════
 // HILFE-SHEET
 // ═══════════════════════════════════════════
-function openHelp()  { document.getElementById('helpOverlay').classList.add('on'); }
-function closeHelp() { document.getElementById('helpOverlay').classList.remove('on'); }
-function closeHelpOnOverlay(e) { if (e.target === document.getElementById('helpOverlay')) closeHelp(); }
+function openHelp()  { document.getElementById('helpDialog').showModal(); }
+function closeHelp() { document.getElementById('helpDialog').close(); }
+document.getElementById('helpDialog').addEventListener('click', e => {
+  if(e.target === document.getElementById('helpDialog')) closeHelp();
+});
 
 // ═══════════════════════════════════════════
 // BACKUP-ORDNER — Verwaltung via IndexedDB
@@ -1353,11 +1405,11 @@ function handleImport(input) {
       confirmDialog(
         'Backup importieren?',
         `${n} Einträge werden importiert. Vorhandene Daten auf diesem Gerät werden dabei überschrieben.`,
-        () => {
+        async () => {
           entries = data.entries;
           if (data.name) { lsSet('faw_name', data.name); document.getElementById('setName').value = data.name; }
           if (data.year) { lsSet('faw_year', data.year); document.getElementById('setYear').value = data.year; }
-          persist();
+          await persist();
           updHeader();
           renderList();
           updExport();
@@ -1374,7 +1426,7 @@ function handleImport(input) {
 }
 
 // ═══════════════════════════════════════════
-// BESTÄTIGUNGS-DIALOG (iOS-safe, kein confirm())
+// BESTÄTIGUNGS-DIALOG (native dialog, iOS-safe)
 // ═══════════════════════════════════════════
 let _confirmCb = null;
 
@@ -1392,17 +1444,16 @@ function confirmDialog(title, msg, onOk, opts) {
   const okBtn = document.getElementById('confirmOkBtn');
   okBtn.textContent = label;
   if (tone === 'primary') {
-    okBtn.style.background = 'var(--yellow)';
-    okBtn.style.color = 'var(--ink)';
+    okBtn.className = 'btn btn-primary';
   } else {
-    okBtn.style.background = 'var(--red)';
-    okBtn.style.color = '#fff';
+    okBtn.className = 'btn btn-delete';
+    okBtn.style.marginTop = '0';
   }
 
-  document.getElementById('confirmOverlay').classList.add('on');
+  document.getElementById('confirmDialogEl').showModal();
 }
 function confirmResolve(ok) {
-  document.getElementById('confirmOverlay').classList.remove('on');
+  document.getElementById('confirmDialogEl').close();
   if (_confirmCb) _confirmCb(ok);
   _confirmCb = null;
 }
